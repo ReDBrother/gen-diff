@@ -1,0 +1,37 @@
+{
+  "name": "hexlet-gen-diff",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "bin": {
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "babel-node": "babel-node",
+    "eslint": "eslint",
+    "build": "NODE_ENV=production babel src --out-dir dist --source-maps inline",
+    "prepublish": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ReDBrother/project-lvl2-s70.git"
+  },
+  "author": "Dmitriy Bataev",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ReDBrother/project-lvl2-s70/issues"
+  },
+  "homepage": "https://github.com/ReDBrother/project-lvl2-s70#readme",
+  "devDependencies": {
+    "babel-cli": "*",
+    "babel-core": "*",
+    "babel-preset-env": "*",
+    "babel-preset-stage-0": "*",
+    "eslint": "*",
+    "eslint-config-airbnb-base": "*",
+    "eslint-plugin-import": "*",
+    "babel-eslint": "*"
+  },
+  "dependencies": {
+    "commander": "*"
+  }
+}
