@@ -1,3 +1,3 @@
-import gendiff from './lib/gen-diff';
+import matcher from './lib/matcher';
 
-export default gendiff;
+export default matcher;
