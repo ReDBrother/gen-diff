@@ -1,4 +1,4 @@
-import genDiff from '..';
+import genDiff from '../src/';
 
 const expected = `{
   host: hexlet.io
@@ -9,8 +9,8 @@ const expected = `{
 }`;
 
 test('compare two files', () => {
-  const path1 = 'src/__tests__/before.json';
-  const path2 = 'src/__tests__/after.json';
+  const path1 = '__tests__/__fixtures__/before.json';
+  const path2 = '__tests__/__fixtures__/after.json';
   const current = genDiff(path1, path2);
   expect(current).toBe(expected);
 });
