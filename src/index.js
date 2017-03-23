@@ -79,7 +79,7 @@ const parse = (path1, path2) => {
   const keys = _.keys(Extentions);
   const findParser = ([key, ...rest]) => {
     if (key === undefined) {
-      throw new Error(`'${extentions}' file extention not support in this version`);
+      throw new Error(`'${extention1}' file extention not support in this version`);
     }
 
     const items = Extentions[key].items;
@@ -87,7 +87,7 @@ const parse = (path1, path2) => {
   };
 
   const parser = findParser(keys);
-  
+
   const data1 = fs.readFileSync(path1, 'utf8');
   const data2 = fs.readFileSync(path2, 'utf8');
   const obj1 = parser(data1);
