@@ -1,20 +1,28 @@
 import _ from 'lodash';
 import fs from 'fs';
+import yaml from 'js-yaml';
 
-const UNCHANGED = 'unchanhed';
-const CHANGED = 'changed';
-const ADDED = 'added';
-const DELETED = 'deleted';
+const Extentions = {
+  JSON: { parser: JSON.parse, items: ['json'] },
+  YAML: { parser: yaml.safeLoad, items: ['yml', 'yaml'] },
+};
+
+const Statuses = {
+  UNCHANGED: 'unchanged',
+  CHANGED: 'changed',
+  ADDED: 'added',
+  DELETED: 'deleted',
+};
 
 const createMessage = (key, info) => {
   switch (info.status) {
-    case UNCHANGED:
+    case Statuses.UNCHANGED:
       return `  ${key}: ${info.value}`;
-    case CHANGED:
-      return `+ ${key}: ${info.after}\n- ${key}: ${info.before}`;
-    case ADDED:
+    case Statuses.CHANGED:
+      return `+ ${key}: ${info.afterValue}\n- ${key}: ${info.beforeValue}`;
+    case Statuses.ADDED:
       return `+ ${key}: ${info.value}`;
-    case DELETED:
+    case Statuses.DELETED:
       return `- ${key}: ${info.value}`;
     default:
       throw new Error(`Unknown status '${info.status}'`);
@@ -37,18 +45,18 @@ const matching = (before, after) => {
     const newAcc = acc;
     if (after[key] === value) {
       newAcc[key] = {
-        status: UNCHANGED,
+        status: Statuses.UNCHANGED,
         value,
       };
     } else if (_.has(after, key)) {
       newAcc[key] = {
-        status: CHANGED,
-        before: value,
-        after: after[key],
+        status: Statuses.CHANGED,
+        beforeValue: value,
+        afterValue: after[key],
       };
     } else {
       newAcc[key] = {
-        status: DELETED,
+        status: Statuses.DELETED,
         value,
       };
     }
@@ -57,7 +65,7 @@ const matching = (before, after) => {
     const newAcc = acc;
     if (!_.has(before, key)) {
       newAcc[key] = {
-        status: ADDED,
+        status: Statuses.ADDED,
         value,
       };
     }
@@ -66,8 +74,28 @@ const matching = (before, after) => {
   return toString(result);
 };
 
-export default (path1, path2) => {
+const parse = (path1, path2) => {
+  const extention1 = path1.split('.').pop();
+  const keys = _.keys(Extentions);
+  const findParser = ([key, ...rest]) => {
+    if (key === undefined) {
+      throw new Error(`'${extentions}' file extention not support in this version`);
+    }
+
+    const items = Extentions[key].items;
+    return _.indexOf(items, extention1) !== -1 ? Extentions[key].parser : findParser(rest);
+  };
+
+  const parser = findParser(keys);
+  
   const data1 = fs.readFileSync(path1, 'utf8');
   const data2 = fs.readFileSync(path2, 'utf8');
-  return matching(JSON.parse(data1), JSON.parse(data2));
+  const obj1 = parser(data1);
+  const obj2 = parser(data2);
+  return { obj1, obj2 };
+};
+
+export default (path1, path2) => {
+  const { obj1, obj2 } = parse(path1, path2);
+  return matching(obj1, obj2);
 };

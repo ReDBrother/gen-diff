@@ -41,6 +41,7 @@
   },
   "dependencies": {
     "commander": "*",
-    "lodash": "*"
+    "lodash": "*",
+    "js-yaml": "*"
   }
 }

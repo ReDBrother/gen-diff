@@ -1,4 +1,4 @@
-import genDiff from '../src/';
+import genDiff from '../src/'; 
 
 const expected = `{
   host: hexlet.io
@@ -8,9 +8,16 @@ const expected = `{
 + verbose: true
 }`;
 
-test('compare two files', () => {
-  const path1 = '__tests__/__fixtures__/before.json';
-  const path2 = '__tests__/__fixtures__/after.json';
+test('compare two JSON files', () => {
+  const path1 = '__tests__/__fixtures__/json-before.json';
+  const path2 = '__tests__/__fixtures__/json-after.json';
+  const current = genDiff(path1, path2);
+  expect(current).toBe(expected);
+});
+
+test('compare two YAML files', () => {
+  const path1 = '__tests__/__fixtures__/yaml-before.yml';
+  const path2 = '__tests__/__fixtures__/yaml-after.yml';
   const current = genDiff(path1, path2);
   expect(current).toBe(expected);
 });
