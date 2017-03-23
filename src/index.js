@@ -1,10 +1,12 @@
 import _ from 'lodash';
 import fs from 'fs';
 import yaml from 'js-yaml';
+import ini from 'ini';
 
 const Extentions = {
   JSON: { parser: JSON.parse, items: ['json'] },
   YAML: { parser: yaml.safeLoad, items: ['yml', 'yaml'] },
+  INI: { parser: ini.parse, items: ['ini'] },
 };
 
 const Statuses = {

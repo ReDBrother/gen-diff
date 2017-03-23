@@ -21,3 +21,11 @@ test('compare two YAML files', () => {
   const current = genDiff(path1, path2);
   expect(current).toBe(expected);
 });
+
+test('compare two INI files', () => {
+  const path1 = '__tests__/__fixtures__/ini-before.ini';
+  const path2 = '__tests__/__fixtures__/ini-after.ini';
+  const current = genDiff(path1, path2);
+  expect(current).toBe(expected);
+});
+
