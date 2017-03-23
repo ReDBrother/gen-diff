@@ -1,103 +1,84 @@
 import _ from 'lodash';
 import fs from 'fs';
-import yaml from 'js-yaml';
-import ini from 'ini';
+import getParser from './parsers';
 
-const Extentions = {
-  JSON: { parser: JSON.parse, items: ['json'] },
-  YAML: { parser: yaml.safeLoad, items: ['yml', 'yaml'] },
-  INI: { parser: ini.parse, items: ['ini'] },
-};
+const UNCHANGED = 0;
+const CHANGED = 1;
+const ADDED = 2;
+const DELETED = 3;
 
-const Statuses = {
-  UNCHANGED: 'unchanged',
-  CHANGED: 'changed',
-  ADDED: 'added',
-  DELETED: 'deleted',
-};
-
-const createMessage = (key, info) => {
+const createMessage = (info) => {
   switch (info.status) {
-    case Statuses.UNCHANGED:
-      return `  ${key}: ${info.value}`;
-    case Statuses.CHANGED:
-      return `+ ${key}: ${info.afterValue}\n- ${key}: ${info.beforeValue}`;
-    case Statuses.ADDED:
-      return `+ ${key}: ${info.value}`;
-    case Statuses.DELETED:
-      return `- ${key}: ${info.value}`;
+    case UNCHANGED:
+      return `  ${info.key}: ${info.value}`;
+    case CHANGED:
+      return `+ ${info.key}: ${info.afterValue}\n- ${info.key}: ${info.beforeValue}`;
+    case ADDED:
+      return `+ ${info.key}: ${info.value}`;
+    case DELETED:
+      return `- ${info.key}: ${info.value}`;
     default:
       throw new Error(`Unknown status '${info.status}'`);
   }
 };
 
-const toString = (obj) => {
-  const keys = _.keys(obj);
-  const arr = keys.map((key) => {
-    const message = createMessage(key, obj[key]);
+const toString = (arr) => {
+  const newArr = arr.map((item) => {
+    const message = createMessage(item);
     return message;
   });
-  const str = _.join(arr, '\n');
+  const str = newArr.join('\n');
 
   return `{\n${str}\n}`;
 };
 
-const matching = (before, after) => {
-  const first = _.transform(before, (acc, value, key) => {
-    const newAcc = acc;
-    if (after[key] === value) {
-      newAcc[key] = {
-        status: Statuses.UNCHANGED,
-        value,
-      };
-    } else if (_.has(after, key)) {
-      newAcc[key] = {
-        status: Statuses.CHANGED,
-        beforeValue: value,
-        afterValue: after[key],
-      };
-    } else {
-      newAcc[key] = {
-        status: Statuses.DELETED,
-        value,
-      };
+const compareTwoConfigurations = (firstConfig, secondConfig) => {
+  const keysOfFirstConfig = Object.keys(firstConfig);
+  const first = keysOfFirstConfig.reduce((acc, key) => {
+    if (firstConfig[key] === secondConfig[key]) {
+      return [...acc, {
+        key,
+        status: UNCHANGED,
+        value: firstConfig[key],
+      }];
+    } else if (_.has(secondConfig, key)) {
+      return [...acc, {
+        key,
+        status: CHANGED,
+        beforeValue: firstConfig[key],
+        afterValue: secondConfig[key],
+      }];
     }
-  }, {});
-  const result = _.transform(after, (acc, value, key) => {
-    const newAcc = acc;
-    if (!_.has(before, key)) {
-      newAcc[key] = {
-        status: Statuses.ADDED,
-        value,
-      };
+
+    return [...acc, {
+      key,
+      status: DELETED,
+      value: firstConfig[key],
+    }];
+  }, []);
+  const keysOfSecondConfig = Object.keys(secondConfig);
+  const result = keysOfSecondConfig.reduce((acc, key) => {
+    if (!_.has(firstConfig, key)) {
+      return [...acc, {
+        key,
+        status: ADDED,
+        value: secondConfig[key],
+      }];
     }
+
+    return acc;
   }, first);
 
-  return toString(result);
-};
-
-const parse = (path1, path2) => {
-  const extention1 = path1.split('.').pop();
-  const keys = _.keys(Extentions);
-  const findParser = ([key, ...rest]) => {
-    if (key === undefined) {
-      throw new Error(`'${extention1}' file extention not support in this version`);
-    }
-
-    const items = Extentions[key].items;
-    return _.indexOf(items, extention1) !== -1 ? Extentions[key].parser : findParser(rest);
-  };
-
-  const parser = findParser(keys);
-
-  const data1 = fs.readFileSync(path1, 'utf8');
-  const data2 = fs.readFileSync(path2, 'utf8');
-  const obj1 = parser(data1);
-  const obj2 = parser(data2);
-  return { obj1, obj2 };
+  return result;
 };
 
 export default (path1, path2) => {
-  const { obj1, obj2 } = parse(path1, path2);
-  return matching(obj1, obj2);
+  const parser1 = getParser(path1);
+  const parser2 = getParser(path2);
+  const data1 = fs.readFileSync(path1, 'utf8');
+  const data2 = fs.readFileSync(path2, 'utf8');
+  const obj1 = parser1.parse(data1);
+  const obj2 = parser2.parse(data2);
+  const result = compareTwoConfigurations(obj1, obj2);
+  return toString(result);
 };
