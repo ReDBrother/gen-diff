@@ -1,11 +1,11 @@
 import program from 'commander';
-import matcher from './matcher';
+import genDiff from '.';
 
 export default () => {
   program
     .version('0.0.2')
     .arguments('<first_config> <second_config>')
-    .action(matcher);
+    .action(genDiff);
 
   program
     .description('Compares two configuration files and shows a difference.')

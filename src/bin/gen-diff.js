@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-import run from '../lib/gen-diff';
+import run from '../gen-diff';
 
 run();
