@@ -16,8 +16,8 @@ export default (path) => {
     }
 
     const items = EXTENSIONS[key].items;
-    const findMatch = items.filter(item => path.endsWith(item));
-    return findMatch.length !== 0 ? EXTENSIONS[key].parser : findParser(rest);
+    const findMatch = items.find(item => path.endsWith(item));
+    return findMatch ? EXTENSIONS[key].parser : findParser(rest);
   };
 
   return findParser(keys);
