@@ -7,6 +7,7 @@ const unchanged = 0;
 const changed = 1;
 const added = 2;
 const deleted = 3;
+const object = 4;
 
 const createMessage = (arr) => {
   const modifyValue = (value) => {
@@ -29,6 +30,7 @@ const createMessage = (arr) => {
 
     switch (item.status) {
       case unchanged:
+      case object:
         return [...acc, { key: `  ${item.key}`, value }];
       case added:
         return [...acc, { key: `+ ${item.key}`, value }];
@@ -86,7 +88,7 @@ const compareTwoConfigurations = (firstConfig, secondConfig) => {
 
         return {
           key: item,
-          status: unchanged,
+          status: object,
           value: obj[item],
         };
       });
