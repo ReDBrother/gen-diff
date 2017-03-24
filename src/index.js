@@ -1,80 +1,124 @@
 import _ from 'lodash';
 import fs from 'fs';
+import path from 'path';
 import getParser from './parsers';
 
-const UNCHANGED = 0;
-const CHANGED = 1;
-const ADDED = 2;
-const DELETED = 3;
+const unchanged = 0;
+const changed = 1;
+const added = 2;
+const deleted = 3;
 
-const createMessage = (info) => {
-  switch (info.status) {
-    case UNCHANGED:
-      return `  ${info.key}: ${info.value}`;
-    case CHANGED:
-      return `+ ${info.key}: ${info.afterValue}\n- ${info.key}: ${info.beforeValue}`;
-    case ADDED:
-      return `+ ${info.key}: ${info.value}`;
-    case DELETED:
-      return `- ${info.key}: ${info.value}`;
-    default:
-      throw new Error(`Unknown status '${info.status}'`);
-  }
+const createMessage = (arr) => {
+  const modifyValue = (value) => {
+    const predicate = _.isObject(value);
+    return predicate ? createMessage(value) : value;
+  };
+
+  const newArr = arr.reduce((acc, item) => {
+    if (item.status === changed) {
+      const afterValue = modifyValue(item.afterValue);
+      const beforeValue = modifyValue(item.beforeValue);
+
+      return [...acc,
+        { key: `+ ${item.key}`, value: afterValue },
+        { key: `- ${item.key}`, value: beforeValue },
+      ];
+    }
+
+    const value = modifyValue(item.value);
+
+    switch (item.status) {
+      case unchanged:
+        return [...acc, { key: `  ${item.key}`, value }];
+      case added:
+        return [...acc, { key: `+ ${item.key}`, value }];
+      case deleted:
+        return [...acc, { key: `- ${item.key}`, value }];
+      default :
+        throw new Error(`Unknown status '${item.status}'`);
+    }
+  }, []);
+
+  const obj = _.keyBy(newArr, 'key');
+  const result = _.mapValues(obj, info => info.value);
+  return result;
 };
 
 const toString = (arr) => {
-  const newArr = arr.map((item) => {
-    const message = createMessage(item);
-    return message;
-  });
-  const str = newArr.join('\n');
-
-  return `{\n${str}\n}`;
+  const message = createMessage(arr);
+  const result = JSON.stringify(message, null, '\t');
+  return result.replace(/"|,/gi, '');
 };
 
 const compareTwoConfigurations = (firstConfig, secondConfig) => {
-  const keysOfFirstConfig = Object.keys(firstConfig);
-  const first = keysOfFirstConfig.reduce((acc, key) => {
-    if (firstConfig[key] === secondConfig[key]) {
-      return [...acc, {
+  const keys = _.union(Object.keys(firstConfig), Object.keys(secondConfig));
+  const result = keys.map((key) => {
+    const beforeValue = firstConfig[key];
+    const afterValue = secondConfig[key];
+
+    if (beforeValue instanceof Object && afterValue instanceof Object) {
+      return {
         key,
-        status: UNCHANGED,
-        value: firstConfig[key],
-      }];
-    } else if (_.has(secondConfig, key)) {
-      return [...acc, {
+        status: unchanged,
+        value: compareTwoConfigurations(beforeValue, afterValue),
+      };
+    } else if (beforeValue === afterValue) {
+      return {
         key,
-        status: CHANGED,
-        beforeValue: firstConfig[key],
-        afterValue: secondConfig[key],
-      }];
+        status: unchanged,
+        value: beforeValue,
+      };
+    } else if (_.has(firstConfig, key) && _.has(secondConfig, key)) {
+      return {
+        key,
+        status: changed,
+        afterValue,
+        beforeValue,
+      };
     }
 
-    return [...acc, {
-      key,
-      status: DELETED,
-      value: firstConfig[key],
-    }];
-  }, []);
-  const keysOfSecondConfig = Object.keys(secondConfig);
-  const result = keysOfSecondConfig.reduce((acc, key) => {
+    const iter = (obj) => {
+      const keysObj = Object.keys(obj);
+      return keysObj.map((item) => {
+        if (item instanceof Object) {
+          return iter(item);
+        }
+
+        return {
+          key: item,
+          status: unchanged,
+          value: obj[item],
+        };
+      });
+    };
+    const processValue = (value) => {
+      const predicate = _.isObject(value);
+      return predicate ? iter(value) : value;
+    };
+
     if (!_.has(firstConfig, key)) {
-      return [...acc, {
+      return {
         key,
-        status: ADDED,
-        value: secondConfig[key],
-      }];
+        status: added,
+        value: processValue(afterValue),
+      };
     }
 
-    return acc;
-  }, first);
+    return {
+      key,
+      status: deleted,
+      value: processValue(beforeValue),
+    };
+  });
 
   return result;
 };
 
 export default (path1, path2) => {
-  const parser1 = getParser(path1);
-  const parser2 = getParser(path2);
+  const extname1 = path.extname(path1);
+  const extname2 = path.extname(path2);
+  const parser1 = getParser(extname1);
+  const parser2 = getParser(extname2);
   const data1 = fs.readFileSync(path1, 'utf8');
   const data2 = fs.readFileSync(path2, 'utf8');
   const obj1 = parser1.parse(data1);
