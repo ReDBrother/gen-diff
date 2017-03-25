@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { unchanged, changed, added, deleted, object } from '..';
 
 const createMessage = (diff) => {
