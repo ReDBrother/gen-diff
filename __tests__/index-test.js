@@ -34,6 +34,18 @@ const out2 = `{
 	}
 }`;
 
+const out3 = `Property 'timeout' was updated. From '50' to '20'
+Property 'proxy' was removed
+Property 'verbose' was added with value: 'true'`;
+
+const out4 = `Property 'common.setting2' was removed
+Property 'common.setting6' was removed
+Property 'common.setting4' was added with value: 'blah blah'
+Property 'common.setting5' was added with complex value
+Property 'group1.baz' was updated. From 'bas' to 'bars'
+Property 'group2' was removed
+Property 'group3' was added with complex value`;
+
 test('compare two JSON files', () => {
   const path1 = '__tests__/__fixtures__/json-before.json';
   const path2 = '__tests__/__fixtures__/json-after.json';
@@ -74,4 +86,19 @@ test('compare two extended INI files', () => {
   const path2 = '__tests__/__fixtures__/extended-ini-after.ini';
   const current = genDiff(path1, path2);
   expect(current).toBe(out2);
+});
+
+test('compare two JSON files (plain format)', () => {
+  const path1 = '__tests__/__fixtures__/json-before.json';
+  const path2 = '__tests__/__fixtures__/json-after.json';
+  const current = genDiff(path1, path2, { format: 'plain' });
+  expect(current).toBe(out3);
+});
+
+
+test('compare two extended JSON files (plain format)', () => {
+  const path1 = '__tests__/__fixtures__/extended-json-before.json';
+  const path2 = '__tests__/__fixtures__/extended-json-after.json';
+  const current = genDiff(path1, path2, { format: 'plain' });
+  expect(current).toBe(out4);
 });
