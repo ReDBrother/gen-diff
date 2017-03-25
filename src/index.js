@@ -9,16 +9,16 @@ const added = 2;
 const deleted = 3;
 const object = 4;
 
-const createMessage = (arr) => {
-  const modifyValue = (value) => {
-    const predicate = _.isObject(value);
-    return predicate ? createMessage(value) : value;
+const createMessage = (diff) => {
+  const processValue = (value) => {
+    const condition = _.isObject(value);
+    return condition ? createMessage(value) : value;
   };
 
-  const newArr = arr.reduce((acc, item) => {
+  const newArr = diff.reduce((acc, item) => {
     if (item.status === changed) {
-      const afterValue = modifyValue(item.afterValue);
-      const beforeValue = modifyValue(item.beforeValue);
+      const afterValue = processValue(item.afterValue);
+      const beforeValue = processValue(item.beforeValue);
 
       return [...acc,
         { key: `+ ${item.key}`, value: afterValue },
@@ -26,7 +26,7 @@ const createMessage = (arr) => {
       ];
     }
 
-    const value = modifyValue(item.value);
+    const value = processValue(item.value);
 
     switch (item.status) {
       case unchanged:
@@ -46,10 +46,88 @@ const createMessage = (arr) => {
   return result;
 };
 
-const toString = (arr) => {
-  const message = createMessage(arr);
+const toString = (diff) => {
+  const message = createMessage(diff);
   const result = JSON.stringify(message, null, '\t');
   return result.replace(/"|,/gi, '');
+};
+
+const createPlainMessage = (diff) => {
+  const modifyArr = (arr) => {
+    const result = arr.map((item) => {
+      const value = item.value;
+      if (value instanceof Array) {
+        const newItems = value.map((info) => {
+          const newKey = `${item.key}.${info.key}`;
+          if (info.status === changed) {
+            return {
+              key: newKey,
+              status: info.status,
+              beforeValue: info.beforeValue,
+              afterValue: info.afterValue,
+            };
+          }
+
+          return {
+            key: newKey,
+            status: info.status,
+            value: info.value,
+          };
+        });
+
+        const processedItems = modifyArr(newItems);
+        return [item, ...processedItems];
+      }
+
+      return item;
+    });
+    return result;
+  };
+  const modifiedDiff = modifyArr(diff);
+
+  const iter = (acc, item) => {
+    if (item instanceof Array) {
+      const newAcc = item.reduce(iter, acc);
+      return newAcc;
+    }
+    const getInfoAboutValue = (value) => {
+      const condition = value instanceof Object;
+      return condition ? 'complex value' : `value: '${item.value}'`;
+    };
+
+    switch (item.status) {
+      case object:
+      case unchanged:
+        return acc;
+      case changed:
+        return [...acc, {
+          name: item.key,
+          status: `updated. From '${item.beforeValue}' to '${item.afterValue}'`,
+        }];
+      case added:
+        return [...acc, {
+          name: item.key,
+          status: `added with ${getInfoAboutValue(item.value)}`,
+        }];
+      case deleted:
+        return [...acc, {
+          name: item.key,
+          status: 'removed',
+        }];
+      default :
+        throw new Error(`Unknown status '${item.status}'`);
+    }
+  };
+  const arr = modifiedDiff.reduce(iter, []);
+  const result = arr
+    .map(item => `Property '${item.name}' was ${item.status}`)
+    .join('\n');
+  return result;
+};
+
+const toPlainString = (diff) => {
+  const message = createPlainMessage(diff);
+  return message;
 };
 
 const compareTwoConfigurations = (firstConfig, secondConfig) => {
@@ -94,8 +172,8 @@ const compareTwoConfigurations = (firstConfig, secondConfig) => {
       });
     };
     const processValue = (value) => {
-      const predicate = _.isObject(value);
-      return predicate ? iter(value) : value;
+      const condition = _.isObject(value);
+      return condition ? iter(value) : value;
     };
 
     if (!_.has(firstConfig, key)) {
@@ -116,7 +194,7 @@ const compareTwoConfigurations = (firstConfig, secondConfig) => {
   return result;
 };
 
-export default (path1, path2) => {
+export default (path1, path2, keys = {}) => {
   const extname1 = path.extname(path1);
   const extname2 = path.extname(path2);
   const parser1 = getParser(extname1);
@@ -126,5 +204,13 @@ export default (path1, path2) => {
   const obj1 = parser1.parse(data1);
   const obj2 = parser2.parse(data2);
   const result = compareTwoConfigurations(obj1, obj2);
-  return toString(result);
+  const format = (str) => {
+    switch (keys.format) {
+      case 'plain':
+        return toPlainString(str);
+      default:
+        return toString(str);
+    }
+  };
+  return format(result);
 };
