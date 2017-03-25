@@ -1,24 +1,19 @@
-import json from './json-parser';
-import yaml from './yaml-parser';
-import ini from './ini-parser';
+import jsonParser from './json-parser';
+import yamlParser from './yaml-parser';
+import iniParser from './ini-parser';
 
-const extentions = {
-  json: { parser: json, items: ['.json'] },
-  yaml: { parser: yaml, items: ['.yml', '.yaml'] },
-  ini: { parser: ini, items: ['.ini'] },
+const parsers = {
+  json: jsonParser,
+  yaml: yamlParser,
+  yml: yamlParser,
+  ini: iniParser,
 };
 
-export default (extension) => {
-  const keys = Object.keys(extentions);
-  const findParser = ([key, ...rest]) => {
-    if (key === undefined) {
-      throw new Error(`There is no parser for this '${extension}' extension`);
-    }
+export default (extName) => {
+  const parser = parsers[extName];
+  if (parser) {
+    return parser;
+  }
 
-    const items = extentions[key].items;
-    const findMatch = items.find(item => extension === item);
-    return findMatch ? extentions[key].parser : findParser(rest);
-  };
-
-  return findParser(keys);
+  throw new Error(`There is no parser for this '${extName}' extension`);
 };

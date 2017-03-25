@@ -1,1 +1,1 @@
-export default JSON;
+export default JSON.parse;
