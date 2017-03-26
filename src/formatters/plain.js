@@ -1,12 +1,9 @@
-import _ from 'lodash';
 import { unchanged, changed, added, deleted, object } from '..';
 
 const createMessage = (diff) => {
   const modifyArr = (arr) => {
     const result = arr.map((item) => {
-      const array = _.isArray(item.beforeValue) ? item.beforeValue : 
-        (_.isArray(item.afterValue) ? item.afterValue : undefined);
-      if (array) {
+      const iter = (array) => {
         const newItems = array.map((info) => {
           const newKey = `${item.key}.${info.key}`;
           return {
@@ -19,6 +16,12 @@ const createMessage = (diff) => {
 
         const processedItems = modifyArr(newItems);
         return [item, ...processedItems];
+      };
+
+      if (item.beforeValue instanceof Array) {
+        return iter(item.beforeValue);
+      } else if (item.afterValue instanceof Array) {
+        return iter(item.afterValue);
       }
 
       return item;
