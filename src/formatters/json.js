@@ -7,10 +7,10 @@ const createMessage = (diff) => {
       return condition ? createMessage(value) : value;
     };
 
-    switch (item.status) {
+    switch (item.type) {
       case object:
       case unchanged:
-        return { ...acc, [item.key]: processValue(item.value) };
+        return { ...acc, [item.key]: processValue(item.beforeValue) };
       case changed:
         return { ...acc,
           [item.key]: {
@@ -19,10 +19,15 @@ const createMessage = (diff) => {
           },
         };
       case added:
+        return { ...acc,
+          [item.key]: {
+            [added]: processValue(item.afterValue),
+          },
+        };
       case deleted:
         return { ...acc,
           [item.key]: {
-            [item.status]: processValue(item.value),
+            [deleted]: processValue(item.beforeValue),
           },
         };
       default:

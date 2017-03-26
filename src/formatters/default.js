@@ -8,28 +8,24 @@ const createMessage = (diff) => {
   };
 
   const newArr = diff.reduce((acc, item) => {
-    if (item.status === changed) {
-      const afterValue = processValue(item.afterValue);
-      const beforeValue = processValue(item.beforeValue);
+    const afterValue = processValue(item.afterValue);
+    const beforeValue = processValue(item.beforeValue);
 
-      return [...acc,
-        { key: `+ ${item.key}`, value: afterValue },
-        { key: `- ${item.key}`, value: beforeValue },
-      ];
-    }
-
-    const value = processValue(item.value);
-
-    switch (item.status) {
+    switch (item.type) {
       case unchanged:
       case object:
-        return [...acc, { key: `  ${item.key}`, value }];
+        return [...acc, { key: `  ${item.key}`, value: beforeValue }];
+      case changed:
+        return [...acc,
+          { key: `+ ${item.key}`, value: afterValue },
+          { key: `- ${item.key}`, value: beforeValue },
+        ];
       case added:
-        return [...acc, { key: `+ ${item.key}`, value }];
+        return [...acc, { key: `+ ${item.key}`, value: afterValue }];
       case deleted:
-        return [...acc, { key: `- ${item.key}`, value }];
+        return [...acc, { key: `- ${item.key}`, value: beforeValue }];
       default :
-        throw new Error(`Unknown status '${item.status}'`);
+        throw new Error(`Unknown type '${item.type}'`);
     }
   }, []);
 

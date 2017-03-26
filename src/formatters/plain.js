@@ -1,25 +1,19 @@
+import _ from 'lodash';
 import { unchanged, changed, added, deleted, object } from '..';
 
 const createMessage = (diff) => {
   const modifyArr = (arr) => {
     const result = arr.map((item) => {
-      const value = item.value;
-      if (value instanceof Array) {
-        const newItems = value.map((info) => {
+      const array = _.isArray(item.beforeValue) ? item.beforeValue : 
+        (_.isArray(item.afterValue) ? item.afterValue : undefined);
+      if (array) {
+        const newItems = array.map((info) => {
           const newKey = `${item.key}.${info.key}`;
-          if (info.status === changed) {
-            return {
-              key: newKey,
-              status: info.status,
-              beforeValue: info.beforeValue,
-              afterValue: info.afterValue,
-            };
-          }
-
           return {
             key: newKey,
-            status: info.status,
-            value: info.value,
+            type: info.type,
+            beforeValue: info.beforeValue,
+            afterValue: info.afterValue,
           };
         });
 
@@ -40,10 +34,10 @@ const createMessage = (diff) => {
     }
     const getInfoAboutValue = (value) => {
       const condition = value instanceof Object;
-      return condition ? 'complex value' : `value: '${item.value}'`;
+      return condition ? 'complex value' : `value: '${value}'`;
     };
 
-    switch (item.status) {
+    switch (item.type) {
       case object:
       case unchanged:
         return acc;
@@ -55,7 +49,7 @@ const createMessage = (diff) => {
       case added:
         return [...acc, {
           name: item.key,
-          status: `added with ${getInfoAboutValue(item.value)}`,
+          status: `added with ${getInfoAboutValue(item.afterValue)}`,
         }];
       case deleted:
         return [...acc, {
@@ -63,7 +57,7 @@ const createMessage = (diff) => {
           status: 'removed',
         }];
       default :
-        throw new Error(`Unknown status '${item.status}'`);
+        throw new Error(`Unknown type '${item.type}'`);
     }
   };
   const arr = modifiedDiff.reduce(iter, []);

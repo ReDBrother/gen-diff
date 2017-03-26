@@ -19,19 +19,21 @@ const compareTwoConfigurations = (firstConfig, secondConfig) => {
     if (beforeValue instanceof Object && afterValue instanceof Object) {
       return {
         key,
-        status: unchanged,
-        value: compareTwoConfigurations(beforeValue, afterValue),
+        type: unchanged,
+        beforeValue: compareTwoConfigurations(beforeValue, afterValue),
+        afterValue: undefined,
       };
     } else if (beforeValue === afterValue) {
       return {
         key,
-        status: unchanged,
-        value: beforeValue,
+        type: unchanged,
+        beforeValue,
+        afterValue: undefined,
       };
     } else if (_.has(firstConfig, key) && _.has(secondConfig, key)) {
       return {
         key,
-        status: changed,
+        type: changed,
         afterValue,
         beforeValue,
       };
@@ -46,8 +48,9 @@ const compareTwoConfigurations = (firstConfig, secondConfig) => {
 
         return {
           key: item,
-          status: object,
-          value: obj[item],
+          type: object,
+          beforeValue: obj[item],
+          afterValue: undefined,
         };
       });
     };
@@ -59,22 +62,24 @@ const compareTwoConfigurations = (firstConfig, secondConfig) => {
     if (!_.has(firstConfig, key)) {
       return {
         key,
-        status: added,
-        value: processValue(afterValue),
+        type: added,
+        beforeValue: undefined,
+        afterValue: processValue(afterValue),
       };
     }
 
     return {
       key,
-      status: deleted,
-      value: processValue(beforeValue),
+      type: deleted,
+      beforeValue: processValue(beforeValue),
+      afterValue: undefined,
     };
   });
 
   return result;
 };
 
-export default (path1, path2, keys = {}) => {
+export default (path1, path2, keys) => {
   const extname1 = path.extname(path1).substr(1);
   const extname2 = path.extname(path2).substr(1);
   const data1 = fs.readFileSync(path1, 'utf8');
@@ -82,7 +87,7 @@ export default (path1, path2, keys = {}) => {
   const obj1 = getParser(extname1)(data1);
   const obj2 = getParser(extname2)(data2);
   const diff = compareTwoConfigurations(obj1, obj2);
-  const format = keys.format ? keys.format : 'default';
+  const format = keys.format;
   const result = getFormatter(format)(diff);
   return result;
 };
