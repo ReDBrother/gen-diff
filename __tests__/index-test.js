@@ -19,6 +19,18 @@ describe('Simple configurations', () => {
 Property 'proxy' was removed
 Property 'verbose' was added with value: 'true'`;
 
+  const out3 = `{
+	"host": "hexlet.io",
+	"timeout": {
+		"added": 20,
+		"removed": 50
+	},
+	"proxy": {
+		"removed": "123.234.53.22"
+	},
+	"verbose": {
+		"added": true
+	}\n}`;
 
   it('compare two JSON files', () => {
     const current = genDiff(beforeJSON, afterJSON);
@@ -39,6 +51,12 @@ Property 'verbose' was added with value: 'true'`;
     const current = genDiff(beforeJSON, afterJSON, { format: 'plain' });
     expect(current).toBe(out2);
   });
+
+  it('compare two JSON files (json format)', () => {
+    const current = genDiff(beforeJSON, afterJSON, { format: 'json' });
+    expect(current).toBe(out3);
+  });
+
 });
 
 describe('Complex configurations', () => {
@@ -82,6 +100,44 @@ Property 'group1.baz' was updated. From 'bas' to 'bars'
 Property 'group2' was removed
 Property 'group3' was added with complex value`;
 
+  const out3 = `{
+	"common": {
+		"setting1": "Value 1",
+		"setting2": {
+			"removed": "200"
+		},
+		"setting3": true,
+		"setting6": {
+			"removed": {
+				"key": "value"
+			}
+		},
+		"setting4": {
+			"added": "blah blah"
+		},
+		"setting5": {
+			"added": {
+				"key5": "value5"
+			}
+		}
+	},
+	"group1": {
+		"baz": {
+			"added": "bars",
+			"removed": "bas"
+		},
+		"foo": "bar"
+	},
+	"group2": {
+		"removed": {
+			"abc": "12345"
+		}
+	},
+	"group3": {
+		"added": {
+			"fee": "100500"
+		}
+	}\n}`;
   it('compare two extended JSON files', () => {
     const current = genDiff(beforeJSON, afterJSON);
     expect(current).toBe(out1);
@@ -100,5 +156,10 @@ Property 'group3' was added with complex value`;
   it('compare two extended JSON files (plain format)', () => {
     const current = genDiff(beforeJSON, afterJSON, { format: 'plain' });
     expect(current).toBe(out2);
+  });
+
+  it('compare two extended JSON files (json format)', () => {
+    const current = genDiff(beforeJSON, afterJSON, {format: 'json'});
+    expect(current).toBe(out3);
   });
 });

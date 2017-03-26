@@ -4,11 +4,11 @@ import path from 'path';
 import getParser from './parsers';
 import getFormatter from './formatters';
 
-export const unchanged = 0;
-export const changed = 1;
-export const added = 2;
-export const deleted = 3;
-export const object = 4;
+export const unchanged = 'uncahnged';
+export const changed = 'changed';
+export const added = 'added';
+export const deleted = 'removed';
+export const object = 'object';
 
 const compareTwoConfigurations = (firstConfig, secondConfig) => {
   const keys = _.union(Object.keys(firstConfig), Object.keys(secondConfig));
@@ -52,7 +52,7 @@ const compareTwoConfigurations = (firstConfig, secondConfig) => {
       });
     };
     const processValue = (value) => {
-      const condition = _.isObject(value);
+      const condition = value instanceof Object;
       return condition ? iter(value) : value;
     };
 
