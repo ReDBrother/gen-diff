@@ -9,6 +9,6 @@ export default () => {
 
   program
     .description('Compares two configuration files and shows a difference.')
-    .option('-f, --format [type]', 'Output format', /^(plain|json)$/i)
+    .option('-f, --format [type]', 'Output format', /^(plain|json)$/i, 'default')
     .parse(process.argv);
 };
