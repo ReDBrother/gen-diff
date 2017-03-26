@@ -33,17 +33,17 @@ Property 'verbose' was added with value: 'true'`;
 	}\n}`;
 
   it('compare two JSON files', () => {
-    const current = genDiff(beforeJSON, afterJSON);
+    const current = genDiff(beforeJSON, afterJSON, { format: 'default' });
     expect(current).toBe(out1);
   });
 
   it('compare two YAML files', () => {
-    const current = genDiff(beforeYAML, afterYAML);
+    const current = genDiff(beforeYAML, afterYAML, { format: 'default' });
     expect(current).toBe(out1);
   });
 
   it('compare two INI files', () => {
-    const current = genDiff(beforeINI, afterINI);
+    const current = genDiff(beforeINI, afterINI, { format: 'default' });
     expect(current).toBe(out1);
   });
 
@@ -139,17 +139,17 @@ Property 'group3' was added with complex value`;
 		}
 	}\n}`;
   it('compare two extended JSON files', () => {
-    const current = genDiff(beforeJSON, afterJSON);
+    const current = genDiff(beforeJSON, afterJSON, { format: 'default' });
     expect(current).toBe(out1);
   });
 
   it('compare two extended YAML files', () => {
-    const current = genDiff(beforeYAML, afterYAML);
+    const current = genDiff(beforeYAML, afterYAML, { format: 'default' });
     expect(current).toBe(out1);
   });
 
   it('compare two extended INI files', () => {
-    const current = genDiff(beforeINI, afterINI);
+    const current = genDiff(beforeINI, afterINI, { format: 'default' });
     expect(current).toBe(out1);
   });
 
