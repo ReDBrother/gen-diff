@@ -7,31 +7,34 @@ const createMessage = (diff) => {
       return condition ? createMessage(value) : value;
     };
 
+    const beforeValue = processValue(item.beforeValue);
+    const afterValue = processValue(item.afterValue);
+
     switch (item.type) {
       case object:
       case unchanged:
-        return { ...acc, [item.key]: processValue(item.beforeValue) };
+        return { ...acc, [item.key]: beforeValue };
       case changed:
         return { ...acc,
           [item.key]: {
-            [added]: processValue(item.afterValue),
-            [deleted]: processValue(item.beforeValue),
+            [added]: afterValue,
+            [deleted]: beforeValue,
           },
         };
       case added:
         return { ...acc,
           [item.key]: {
-            [added]: processValue(item.afterValue),
+            [added]: afterValue,
           },
         };
       case deleted:
         return { ...acc,
           [item.key]: {
-            [deleted]: processValue(item.beforeValue),
+            [deleted]: beforeValue,
           },
         };
       default:
-        throw new Error(`Unknown status '${item.status}'`);
+        throw new Error(`Unknown status '${item.type}'`);
     }
   };
 
